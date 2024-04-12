@@ -33,5 +33,5 @@ This jenkins pipeline deploys the AWS Resources to push the GuardDuty Findings t
 | Extended Choice | terraform_roles | |
 | Extended Choice | deployments | |
 | Hidden | aws_org_role | bsl-{organization}-admin-fulladmin-adfs-role |
-| Hidden | terraform_path | /lseg/jenkins/tools/terraform/terraform_1.3.9 |
+| Hidden | terraform_path | /abcd/jenkins/tools/terraform/terraform_1.3.9 |
 | Choice | aws_regions | |

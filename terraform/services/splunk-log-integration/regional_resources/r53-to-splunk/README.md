@@ -41,7 +41,7 @@
 |------|-------------|------|---------|:--------:|
 | <a name="input_application_id"></a> [application\_id](#input\_application\_id) | n/a | `string` | `"APP-00814"` | no |
 | <a name="input_cost_centre"></a> [cost\_centre](#input\_cost\_centre) | n/a | `string` | `"CC51256"` | no |
-| <a name="input_email_subscription_list"></a> [email\_subscription\_list](#input\_email\_subscription\_list) | n/a | `list(any)` | <pre>[<br>  "CloudAWSDeadpoolDL@lseg.com",<br>  "CloudOpsDL@lseg.com",<br>  "CyberSecurity_SecurityOperations_CTD@lseg.com"<br>]</pre> | no |
+| <a name="input_email_subscription_list"></a> [email\_subscription\_list](#input\_email\_subscription\_list) | n/a | `list(any)` | <pre>[<br>  "CloudAWSDeadpoolDL@abcd.com",<br>  "CloudOpsDL@abcd.com",<br>  "CyberSecurity_SecurityOperations_CTD@abcd.com"<br>]</pre> | no |
 | <a name="input_service_name"></a> [service\_name](#input\_service\_name) | n/a | `string` | `"r53"` | no |
 | <a name="input_splunk_hec_url"></a> [splunk\_hec\_url](#input\_splunk\_hec\_url) | n/a | `string` | `"https://http-inputs-greywolf.splunkcloud.com:443/services/collector"` | no |
 
@@ -61,9 +61,9 @@
 application_id = "APP-00814"
 cost_centre    = "CC51256"
 email_subscription_list = [
-  "CloudAWSDeadpoolDL@lseg.com",
-  "CloudOpsDL@lseg.com",
-  "CyberSecurity_SecurityOperations_CTD@lseg.com"
+  "CloudAWSDeadpoolDL@abcd.com",
+  "CloudOpsDL@abcd.com",
+  "CyberSecurity_SecurityOperations_CTD@abcd.com"
 ]
 service_name   = "r53"
 splunk_hec_url = "https://http-inputs-greywolf.splunkcloud.com:443/services/collector"

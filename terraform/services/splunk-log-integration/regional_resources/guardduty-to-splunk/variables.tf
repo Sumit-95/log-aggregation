@@ -7,7 +7,7 @@ variable "application_id" {
 }
 
 variable "email_subscription_list" {
-  default = ["CloudAWSDeadpoolDL@lseg.com", "CloudOpsDL@lseg.com", "CyberSecurity_SecurityOperations_CTD@lseg.com"]
+  default = ["CloudAWSDeadpoolDL@abcd.com", "CloudOpsDL@abcd.com", "CyberSecurity_SecurityOperations_CTD@abcd.com"]
   type    = list(any)
 }
 

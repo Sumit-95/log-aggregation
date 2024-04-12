@@ -190,7 +190,7 @@ exports.handler = (event, context, callback) => {
 
 	var accountName
 	//set base vars requested by gsoc
-	const tenantName = 'LSEG'
+	const tenantName = 'abcd'
 	const sourcetype = 'aws:route53'
     
 	//get splunk token

@@ -55,7 +55,7 @@ please see [Terraform Modules](terraform).
 This service needs to be deployed into all operational regions. Please note that
 as of March 20th, 2019 new regions added to AWS are not made available by 
 default, please see: [Managing AWS Regions](https://docs.aws.amazon.com/general/latest/gr/rande-manage.html)
-So unless a region, made available after March 20th, 2019 is approved by LSEG, 
+So unless a region, made available after March 20th, 2019 is approved by abcd, 
 we do not need to deploy this service to those regions.
 
 Below is a list of regions that this service is deployed to:
@@ -85,7 +85,7 @@ Below is a list of regions that this service is deployed to:
 
 The Splunk HTTP Event Collector URL (SPLUNK_HEC_URL) & Token (SPLUNK_HEC_TOKEN) are managed by the Cyber Security Security Operations - Threat Detection Engineering.
 
-__Contact Email:__ CyberSecurity_SecurityOperations_CTD@lseg.com
+__Contact Email:__ CyberSecurity_SecurityOperations_CTD@abcd.com
 
 
 <a name="testing"></a>
@@ -108,7 +108,7 @@ There is a Makefile that is configured to perform:
 If any changes are made to this service, please ensure that the GSOC team are informed so 
 as to update their dashboard feed on Splunk.
 
-__GSOC Contact Email:__ gsoc@lseg.com
+__GSOC Contact Email:__ gsoc@abcd.com
 
 <a name="changelog"></a>
 

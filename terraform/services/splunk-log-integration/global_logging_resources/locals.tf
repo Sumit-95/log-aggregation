@@ -41,12 +41,12 @@ locals {
       "ProjectCode"         = lookup(local.admin_account_mapping[data.aws_caller_identity.current.account_id], "project_code"),
       "Automation"          = "N/A",
       "Environment"         = upper(local.environment_type),
-      "Owner"               = "CloudEngineering@lseg.com",
+      "Owner"               = "CloudEngineering@abcd.com",
       "Region"              = "Global",
       "Reason"              = "splunk-ingestion-service",
       "mnd-applicationid"   = lower(var.application_id),
       "mnd-applicationname" = "splunk-ingestion-service",
-      "mnd-owner"           = "cloudopsdl@lseg.com",
+      "mnd-owner"           = "cloudopsdl@abcd.com",
       "mnd-supportgroup"    = "bsl cloud ops",
       "mnd-projectcode"     = lookup(local.admin_account_mapping[data.aws_caller_identity.current.account_id], "project_code"),
       "mnd-costcentre"      = "cc51256",
@@ -66,7 +66,7 @@ locals {
 
   iam_policy_for_step_function = {
     iam_policy = {
-      description = format("LSEG custom policy for %s", local.iam_role_for_step_function)
+      description = format("abcd custom policy for %s", local.iam_role_for_step_function)
       name        = format("%s-%s-%s-%s-step-function-policy", local.aws_business_entitiy, local.environment_type, local.aws_account, local.project_name)
       path        = "/"
       policy      = data.aws_iam_policy_document.iam_policy_for_step_function.json
@@ -75,7 +75,7 @@ locals {
 
   iam_policy_for_lambda_function = {
     iam_policy = {
-      description = format("LSEG custom policy for %s", local.iam_role_for_lambda_function)
+      description = format("abcd custom policy for %s", local.iam_role_for_lambda_function)
       name        = format("%s-%s-%s-%s-lambda-function-policy", local.aws_business_entitiy, local.environment_type, local.aws_account, local.project_name)
       path        = "/"
       policy      = data.aws_iam_policy_document.iam_policy_for_lambda_function.json

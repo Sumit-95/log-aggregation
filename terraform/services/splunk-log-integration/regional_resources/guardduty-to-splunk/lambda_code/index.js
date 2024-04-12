@@ -118,7 +118,7 @@ exports.handler = (event, context, callback) => {
             accountIdEntry = event.detail.accountId;
         };
         console.log(`Obtaining additional parameters (accountName for ${accountIdEntry}, tenant)`);
-        const tenantName = 'LSEG';
+        const tenantName = 'abcd';
         accountNameQuery(accountIdEntry).then((accountName) => {
             
             console.log(`Appending additional parameters to the event (accountName: ${accountName}, tenant: ${tenantName})`);

@@ -143,7 +143,7 @@ exports.handler = (event, context, callback) => {
    
 	var accountName
 	//set base vars requested by gsoc
-	const tenantName = 'LSEG'
+	const tenantName = 'abcd'
 	const sourcetype = 'aws:waf'
 	//get raw data from S3 path and bucket as in event
 	// 

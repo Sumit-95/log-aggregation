@@ -75,7 +75,7 @@ node('master'){
         // child account id
         stage("obtaining logging account id") {
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: aws_credentials_id, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
-                aws_logging_account_id = sh script: "source /lseg/jenkins/cps_python/bin/activate && python -c \"from helpers import organization_acc as a; print(a.get_account_id(\'${aws_logging_account_name}\', \'${USERNAME}\', \'${PASSWORD}\',\'${aws_org_role}\', \'eu-west-2\'))\" ", returnStdout: true
+                aws_logging_account_id = sh script: "source /abcd/jenkins/cps_python/bin/activate && python -c \"from helpers import organization_acc as a; print(a.get_account_id(\'${aws_logging_account_name}\', \'${USERNAME}\', \'${PASSWORD}\',\'${aws_org_role}\', \'eu-west-2\'))\" ", returnStdout: true
                 aws_logging_account_id = aws_logging_account_id.trim()
                 echo "================= Logging account ID is ${aws_logging_account_id} ================="
             }
@@ -133,11 +133,11 @@ node('master'){
 def runTerraformWithADFSCred(wrk_dir, terraform_path, aws_org_role, aws_credentials_id, aws_region, switch_role, backend_config, var_file="", parallelism="True",tfvars) {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: aws_credentials_id, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]){
         sh script: """
-            source /lseg/jenkins/cps_python/bin/activate
-            export no_proxy=$no_proxy,lsevault-dev.lseg.stockex.local,bitbucket.unix.lch.com
-            export VAULT_ADDR='https://lsevault-dev.lseg.stockex.local'
+            source /abcd/jenkins/cps_python/bin/activate
+            export no_proxy=$no_proxy,lsevault-dev.abcd.stockex.local,bitbucket.unix.lch.com
+            export VAULT_ADDR='https://lsevault-dev.abcd.stockex.local'
             export VAULT_SKIP_VERIFY=true 
-            export VAULT_TOKEN=\$(curl -sk --connect-timeout 20 --max-time 60 --request POST --data '{\"password\": \"${PASSWORD}\"}' https://lsevault-dev.lseg.stockex.local/v1/auth/ldap/login/${USERNAME} | sed 's/.*\"client_token\":\"//' | sed 's/\".*//')
+            export VAULT_TOKEN=\$(curl -sk --connect-timeout 20 --max-time 60 --request POST --data '{\"password\": \"${PASSWORD}\"}' https://lsevault-dev.abcd.stockex.local/v1/auth/ldap/login/${USERNAME} | sed 's/.*\"client_token\":\"//' | sed 's/\".*//')
             python helpers/terraform.py \
             -t ${terraform_path} \
             -u ${USERNAME} \
