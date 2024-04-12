@@ -1,0 +1,156 @@
+/*
+    This Jenkins pipeline manages the Terraform deployment of ingest AWS logs to Splunk.
+*/
+
+node('master'){
+    def aws_admin_account_name   = params.aws_admin_account_name.trim()
+    def aws_logging_account_name = params.aws_logging_account_name.trim()
+    def aws_org_role             = params.aws_org_role
+    def terraform_path           = params.terraform_path
+    def terraform_action         = params.terraform_action
+    def terraform_role           = params.terraform_role
+    def deployments              = params.deployments.split(",").sort()
+    def aws_regions              = params.aws_regions.split(",").sort()
+    def log_source               = params.log_source
+    def aws_logging_account_id   = ""
+    
+    // General Variables
+    def business_entity  = aws_logging_account_name.split("-")[1].toLowerCase()
+    def application_name = aws_logging_account_name.split("-")[2].toLowerCase()
+    def environment      = aws_logging_account_name.split("-")[3].toLowerCase()
+    def admin_account    = aws_admin_account_name.split("-")[3].toLowerCase()
+
+    //set service dependant variables
+    switch(terraform_role) { 
+        case "guardduty-to-splunk": 
+            tfvars = "service_name=gd"
+            break
+        case "waf-to-splunk": 
+            tfvars = "service_name=waf"
+            break
+        case "r53-to-splunk":
+            tfvars = "service_name=r53"
+            break
+        default:
+            error("The Serice is not supported")
+    }
+    
+    // Terraform Backend Config
+    def aws_state_region              = "eu-west-2"
+    def global_s3_bucket              = "${business_entity}-${environment}-${admin_account}-application-terraform"
+    def global_ddb_state_lock         = "${business_entity}-${environment}-${admin_account}-application-terraform-locks"
+    if (environment == 'prod') {
+        global_s3_bucket              = "${business_entity}-master-${admin_account}-application-terraform"
+        global_ddb_state_lock         = "${business_entity}-master-${admin_account}-application-terraform-locks"
+    }
+    def global_logging_s3_bucket      = "${business_entity}-${application_name}-${environment}-terraform"
+    def global_logging_ddb_state_lock = "${business_entity}-${application_name}-${environment}-terraform-locks"
+    def regional_s3_bucket            = "${business_entity}-${application_name}-${environment}-terraform"
+    def regional_ddb_state_lock       = "${business_entity}-${application_name}-${environment}-terraform-locks"
+    
+    switch(aws_logging_account_name) { 
+        case "AWS-BSL-LOGGING-CETDEV": 
+            aws_credentials_id = "aws_cetdev_adfs_binding"
+            break
+        case "AWS-BSL-LOGGING-CETTEST": 
+            aws_credentials_id = "aws_test_adfs_binding"
+            break
+        case "AWS-BSL-LOGGING-PROD":
+            aws_credentials_id = "aws_adfs_binding"
+            break
+        default:
+            error("The account name provided is not a logging account.")
+    }
+
+    // Jenkins ANSI Color Plugin. For more information please see:
+    // https://github.com/jenkinsci/ansicolor-plugin
+    wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'xterm']) {
+
+        // Checking out the aws-logs-to-splunk-service repository
+        stage('checkout') {
+            checkout scm
+        }
+
+        // Executing the organization_acc python module so as to obtain the 
+        // child account id
+        stage("obtaining logging account id") {
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: aws_credentials_id, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                aws_logging_account_id = sh script: "source /lseg/jenkins/cps_python/bin/activate && python -c \"from helpers import organization_acc as a; print(a.get_account_id(\'${aws_logging_account_name}\', \'${USERNAME}\', \'${PASSWORD}\',\'${aws_org_role}\', \'eu-west-2\'))\" ", returnStdout: true
+                aws_logging_account_id = aws_logging_account_id.trim()
+                echo "================= Logging account ID is ${aws_logging_account_id} ================="
+            }
+        }
+
+        for (i = 0; i < deployments.size(); i++) {
+            def deployment = deployments[i]
+
+            if (deployment == 'global') {
+                //def terraform_role  = "splunk-log-integration"
+                def switch_role = "COMMAND_ROLE_NO_SWITCH"
+                def global_key = "${terraform_role}/global/terraform.tfstate"
+                def global_backend_config = "bucket=${global_s3_bucket} key=${global_key} region=${aws_state_region} encrypt=true dynamodb_table=${global_ddb_state_lock}"
+
+                stage("create global resources") {
+                    echo "===================== Deploying Global Resources ============================"
+                    runTerraformWithADFSCred("terraform/services/splunk-log-integration/global_resources", terraform_path, aws_org_role, aws_credentials_id, aws_state_region, switch_role, global_backend_config, tfvars)
+                }
+
+                switch_role = "arn:aws:iam::${aws_logging_account_id}:role/OrganizationAccountAccessRole"
+
+                def global_logging_key = "${terraform_role}/global/terraform.tfstate"
+                def global_logging_backend_config = "bucket=${global_logging_s3_bucket} key=${global_logging_key} region=${aws_state_region} encrypt=true dynamodb_table=${global_logging_ddb_state_lock}"
+                
+                stage("create global logging resources") {
+                    echo "===================== Deploying Global Logging Resources ============================"
+                    runTerraformWithADFSCred("terraform/services/splunk-log-integration/global_logging_resources", terraform_path, aws_org_role, aws_credentials_id, aws_state_region, switch_role, global_logging_backend_config, tfvars)
+                }
+            }
+
+            if (deployment == 'regional') {
+                for (q = 0; q < aws_regions.size(); q++) {
+                    def aws_region = aws_regions[q]
+
+                    stage('checkout') {
+                        checkout scm
+                    }
+
+                    def switch_role = "arn:aws:iam::${aws_logging_account_id}:role/OrganizationAccountAccessRole"
+
+                    def regional_key = "${terraform_role}/regional/${aws_region}/terraform.tfstate"
+                    def regional_backend_config = "bucket=${regional_s3_bucket} key=${regional_key} region=${aws_state_region} encrypt=true dynamodb_table=${regional_ddb_state_lock}"
+
+                    stage("create regional resources in: ${aws_region}") {
+                        echo "===================== Deploying Regional Resources in ${aws_region} ============================"
+                        runTerraformWithADFSCred("terraform/services/splunk-log-integration/regional_resources/${terraform_role}", terraform_path, aws_org_role, aws_credentials_id, aws_region, switch_role, regional_backend_config, tfvars)
+                    }
+                }
+            }
+        }
+    }
+} 
+
+
+def runTerraformWithADFSCred(wrk_dir, terraform_path, aws_org_role, aws_credentials_id, aws_region, switch_role, backend_config, var_file="", parallelism="True",tfvars) {
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: aws_credentials_id, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]){
+        sh script: """
+            source /lseg/jenkins/cps_python/bin/activate
+            export no_proxy=$no_proxy,lsevault-dev.lseg.stockex.local,bitbucket.unix.lch.com
+            export VAULT_ADDR='https://lsevault-dev.lseg.stockex.local'
+            export VAULT_SKIP_VERIFY=true 
+            export VAULT_TOKEN=\$(curl -sk --connect-timeout 20 --max-time 60 --request POST --data '{\"password\": \"${PASSWORD}\"}' https://lsevault-dev.lseg.stockex.local/v1/auth/ldap/login/${USERNAME} | sed 's/.*\"client_token\":\"//' | sed 's/\".*//')
+            python helpers/terraform.py \
+            -t ${terraform_path} \
+            -u ${USERNAME} \
+            -p ${PASSWORD} \
+            -i ${aws_org_role} \
+            -w ${wrk_dir} \
+            -a ${terraform_action} \
+            -r ${aws_region} \
+            -s ${switch_role} \
+            -b ${backend_config} \
+            -n ${tfvars} \
+            -l "True"
+            deactivate
+        """
+    }
+}
